@@ -19,19 +19,26 @@ sc = spark.sparkContext
 
 # ---------------------------------------------                 Query 1               ------------------------------------------------
 
+def getEarnings(a,b):
+        print("a is:" + a)
+        print("b is:" + b)
+        a = int(a)
+        b = int(b)
+        return (float(a)-float(b))/float(b)
+        
 
-# q1 =    spark.read.parquet('hdfs://master:9000/data/movies.parquet').rdd. \
-#         filter(lambda row: False if row._c3 == None else True). \
-#         filter(lambda row: True if row._c3.split('-')[0]>='2000' and row._c3.split('-')[0].isdigit() else False ). \
-#         filter(lambda row: True if row._c5 > '0' else False ). \
-#         map(lambda row: ( row._c3.split('-')[0], (row._c1, row._c5) ) ). \
-#         reduceByKey(lambda x, y : x if x[1]>y[1] else y  ). \
-#         sortByKey(ascending=False). \
-#         take(20)
+q1 =    sc.textFile('hdfs://master:9000/data/movies.csv'). \
+        filter(lambda row: False if row.split(',')[3] == None else True). \
+        filter(lambda row: True if row.split(',')[3].split('-')[0]>='2000' and row.split(',')[3].split('-')[0].isdigit() else False ). \
+        filter(lambda row: True if row.split(',')[6] > '0' and row.split(',')[5] > '0' else False ). \
+        map(lambda row: ( row.split(',')[3].split('-')[0], (row.split(',')[1], getEarnings(row.split(',')[6],row.split(',')[5])  ) ) ). \
+        reduceByKey(lambda x, y : x if x[1]>y[1] else y  ). \
+        sortByKey(ascending=False). \
+        take(20)
 
 
-# for i in q1:
-#         print(i)
+for i in q1:
+        print(i)
 
 # ---------------------------------------------                 Query 2               ------------------------------------------------
 
@@ -51,18 +58,18 @@ sc = spark.sparkContext
 # ---------------------------------------------                 Query 3               ------------------------------------------------
 
 
-ratings =       sc.textFile('hdfs://master:9000/data/ratings.csv'). \
-                map(lambda row : (row.split(',')[1] , row.split(',')[2] )  )
+# ratings =       sc.textFile('hdfs://master:9000/data/ratings.csv'). \
+#                 map(lambda row : (row.split(',')[1] , row.split(',')[2] )  )
 
-moviesGenres =          sc.textFile('hdfs://master:9000/data/movie_genres.csv'). \
-                        map(lambda row : (row.split(',')[0] , row.split(',')[1] )  )
+# moviesGenres =          sc.textFile('hdfs://master:9000/data/movie_genres.csv'). \
+#                         map(lambda row : (row.split(',')[0] , row.split(',')[1] )  )
 
-movieGenreRatings = ratings.join(moviesGenres)
+# movieGenreRatings = ratings.join(moviesGenres)
 
-q3 =    movieGenreRatings. \
-        map( lambda row: (row[1][1] , row[1][0] ) ).collect()
-for i in q3:
-        print(i)
+# q3 =    movieGenreRatings. \
+#         map( lambda row: (row[1][1] , row[1][0] ) ).collect()
+# for i in q3:
+#         print(i)
 
 # print(x.collect())
 
