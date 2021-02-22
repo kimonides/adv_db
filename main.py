@@ -1,6 +1,12 @@
 from pyspark.sql import SparkSession
 from pyspark.sql import Row
 
+from io import StringIO
+import csv
+
+def split_complex(x):
+        return list(csv.reader(StringIO(x),delimiter=','))[0]
+
 spark = SparkSession.builder.appName("paconator").getOrCreate()
 spark.sparkContext.setLogLevel("ERROR")
 
@@ -28,10 +34,11 @@ def getEarnings(a,b):
         
 
 q1 =    sc.textFile('hdfs://master:9000/data/movies.csv'). \
-        filter(lambda row: False if row.split(',')[3] == None else True). \
-        filter(lambda row: True if row.split(',')[3].split('-')[0]>='2000' and row.split(',')[3].split('-')[0].isdigit() else False ). \
-        filter(lambda row: True if row.split(',')[6] > '0' and row.split(',')[5] > '0' else False ). \
-        map(lambda row: ( row.split(',')[3].split('-')[0], (row.split(',')[1], getEarnings(row.split(',')[6],row.split(',')[5])  ) ) ). \
+        map(lambda row : split_complex(row)). \
+        filter(lambda row: False if row[3] == None else True). \
+        filter(lambda row: True if row[3].split('-')[0]>='2000' and row[3].split('-')[0].isdigit() else False ). \
+        filter(lambda row: True if row[6] > '0' and row[5] > '0' else False ). \
+        map(lambda row: ( row[3].split('-')[0], (row[1], getEarnings(row[6],row[5])  ) ) ). \
         reduceByKey(lambda x, y : x if x[1]>y[1] else y  ). \
         sortByKey(ascending=False). \
         take(20)
