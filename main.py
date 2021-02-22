@@ -67,24 +67,61 @@ sc = spark.sparkContext
 # ---------------------------------------------                 Query 3               ------------------------------------------------
 
 
-ratings = sc.textFile('hdfs://master:9000/data/ratings.csv'). \
-    map(lambda row: split_complex(row)). \
-    map(lambda row: (row[1], row[2]))
+# ratings = sc.textFile('hdfs://master:9000/data/ratings.csv'). \
+#     map(lambda row: split_complex(row)). \
+#     map(lambda row: (row[1], row[2]))
+
+# moviesGenres = sc.textFile('hdfs://master:9000/data/movie_genres.csv'). \
+#     map(lambda row: split_complex(row)). \
+#     map(lambda row: (row[0], row[1]))
+
+# movieGenreRatings = ratings.join(moviesGenres)
+# # Now we have tuples of ( movieID , (movieRating,movieGenre) )
+
+# q3 = movieGenreRatings. \
+#         map(lambda row: (row[0], (float(row[1][0]), row[1][1], 1))). \
+#         reduceByKey(lambda x, y: (x[0]+y[0], x[1], x[2]+y[2])). \
+#         map( lambda row: ( row[1][1] , (row[1][0]/row[1][2] , 1 )) ). \
+#         reduceByKey( lambda x,y:  (x[0]+y[0] , x[1]+y[1])). \
+#         map( lambda row: ( row[0] , ( row[1][0]/row[1][1] , row[1][1] ) )).collect()
+
+# for i in q3:
+#     print(i)
+
+# ---------------------------------------------                 Query 4               ------------------------------------------------
 
 moviesGenres = sc.textFile('hdfs://master:9000/data/movie_genres.csv'). \
-    map(lambda row: split_complex(row)). \
-    map(lambda row: (row[0], row[1]))
+        map(lambda row: split_complex(row)). \
+        filter(lambda row: True if row[1]=='Drama' else False ). \
+        map(lambda row: (row[0], row[1]))
 
-movieGenreRatings = ratings.join(moviesGenres)
-# Now we have tuples of ( movieID , (movieRating,movieGenre) )
+movies =        sc.textFile('hdfs://master:9000/data/movies.csv'). \
+                map( split_complex ). \
+                map( lambda row: ( row[0], (len(row[2]) , row[3].split('-')[0] ) ) ). \
+                filter( lambda row: True if row[1][1]>'1999' else False ). \
+                map( lambda row: ( row[0], ( row[1][0], (int(row[1][1]) % 100)//5 ) ) )
+                
+GenreLengths = moviesGenres.join(movies)
 
-q3 = movieGenreRatings. \
-        map(lambda row: (row[0], (float(row[1][0]), row[1][1], 1))). \
-        reduceByKey(lambda x, y: (x[0]+y[0], x[1], x[2]+y[2])). \
-        map( lambda row: ( row[1][1] , (row[1][0]/row[1][2] , 1 )) ). \
-        reduceByKey( lambda x,y:  (x[0]+y[0] , x[1]+y[1])). \
-        map( lambda row: ( row[0] , ( row[1][0]/row[1][1] , row[1][1] ) )).collect()
+q4 =    GenreLengths. \
+        map( lambda row: ( row[1][1][1],(row[1][1][0],1) ) ). \
+        reduceByKey( lambda x,y: (x[0]+y[0] , x[1]+y[1]) ). \
+        map( lambda row: ( row[0] , row[1][0]/row[1][1] ) ).collect()
 
-for i in q3:
-    print(i)
+
+
+for i in q4:
+        print(i)
+
+
+
+
+
+
+
+
+
+
+
+
 
