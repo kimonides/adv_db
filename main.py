@@ -118,44 +118,78 @@ sc = spark.sparkContext
 
 # ---------------------------------------------                 Query 1 CSV               ------------------------------------------------
 
-def formatYear(timestamp):
-        return timestamp.split('-')[0]
+# def formatYear(timestamp):
+#         return timestamp.split('-')[0]
 
-movies = spark.read.format("csv").options(header='false', inferSchema='true').load("hdfs://master:9000/data/movies.csv")
+# movies = spark.read.format("csv").options(header='false', inferSchema='true').load("hdfs://master:9000/data/movies.csv")
 
-movies.registerTempTable('movies')
-spark.udf.register("formatter", formatYear)
+# movies.registerTempTable('movies')
+# spark.udf.register("formatter", formatYear)
 
-# sqlQuery = "select YEAR(_c3) as year,MAX( (_c6+_c7)/_c7 ) as income , movies._c2 as movie from movies where YEAR(_c3)>2000 group by YEAR(_c3) order by YEAR(_c3) desc"
-# sqlQuery = """ 
-#         SELECT year(_c3), _c1, gross
-#         FROM movies
-#         WHERE year(_c3) IN (
-#                 SELECT year(_c3)
-#                 FROM movies
-#                 WHERE gross IN (
-#                         SELECT MAX( (_c6+_c7)/_c7 ) as gross
-#                         FROM movies
-#                         GROUP BY year(_c3)
-#                 )
-#         )
+
+# sqlQuery = """
+#     select YEAR(_c3) as year,MAX( (_c5+_c6)/_c6 ) as income from movies where YEAR(_c3)>2000 and _c6>0 group by YEAR(_c3) order by YEAR(_c3) desc
 # """
 
-sqlQuery = """SELECT year(_c3)
-                FROM movies
-                WHERE (_c6+_c7)/_c7 IN (
-                        SELECT MAX( (_c6+_c7)/_c7 )
-                        FROM movies
-                        GROUP BY year(_c3)
-                )"""
-# sqlQuery = "select * from movies"
-# sqlQuery = "SELECT EXTRACT(year from `_c3`) FROM movies"
+# res = spark.sql(sqlQuery)
+
+# res.show()
+
+
+# ---------------------------------------------                 Query 2 CSV               ------------------------------------------------
+
+# movies = spark.read.format("csv").options(header='false', inferSchema='true').load("hdfs://master:9000/data/ratings.csv")
+
+# movies.registerTempTable('ratings')
+
+# cnt = spark.table('ratings').groupBy('_c0').count().count()
+# cnt2 = spark.table('ratings').groupBy('_c0').avg('_c2').where('avg(_c2)>3').count()
+# res = cnt2/cnt
+
+# print('Result to Q2 is '+str(res))
+
+
+# ---------------------------------------------                 Query 3 CSV               ------------------------------------------------
+
+# genres = spark.read.format("csv").options(header='false', inferSchema='true').load("hdfs://master:9000/data/movie_genres.csv")
+# genres.registerTempTable('genres')
+
+# ratings = spark.read.format("csv").options(header='false', inferSchema='true').load("hdfs://master:9000/data/ratings.csv")
+# ratings.registerTempTable('ratings')
+
+
+# sqlQuery = """
+#     select genres._c1 as Genre , avg(t2.rating) as Rating, count(*) as NumberOfMovies
+#     from genres inner join (
+#         select _c1 as movieID,avg(_c2) as rating from ratings group by _c1
+#     ) t2 on genres._c0=t2.movieID
+#     group by genres._c1
+
+# """
+
+# res = spark.sql(sqlQuery)
+
+# res.show()
+
+# ---------------------------------------------                 Query 4 CSV               ------------------------------------------------
+
+genres = spark.read.format("csv").options(header='false', inferSchema='true').load("hdfs://master:9000/data/movie_genres.csv")
+genres.registerTempTable('genres')
+
+movies = spark.read.format("csv").options(header='false', inferSchema='true').load("hdfs://master:9000/data/movies.csv")
+movies.registerTempTable('movies')
+
+
+sqlQuery = """
+    select (YEAR(_c3)-2000) DIV 5 as quinquennium, avg(LENGTH(_c2)) from (
+        select YEAR(_c3) as year, 
+    )
+    where YEAR(_c3)>2000
+    group by YEAR(_c3) DIV 5
+"""
 
 res = spark.sql(sqlQuery)
 
 res.show()
-
-
-
 
 
