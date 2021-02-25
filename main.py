@@ -114,7 +114,7 @@ sc = spark.sparkContext
 #         print(i)
 
 
-
+# ---------------------------------------------                 SQL WITH CSV              ------------------------------------------------
 
 # ---------------------------------------------                 Query 1 CSV               ------------------------------------------------
 
@@ -181,11 +181,11 @@ movies.registerTempTable('movies')
 
 
 sqlQuery = """
-    select (YEAR(_c3)-2000) DIV 5 as quinquennium, avg(LENGTH(_c2)) from (
-        select YEAR(_c3) as year, 
-    )
-    where YEAR(_c3)>2000
-    group by YEAR(_c3) DIV 5
+    select YEAR(movies._c3) DIV 5 as Quinquennium, avg(LENGTH(movies._c2)) as Length from movies
+    inner join genres on movies._c0=genres._c0
+    where YEAR(movies._c3)>2000 and genres._c1='Drama'
+    group by YEAR(movies._c3) DIV 5
+    order by YEAR(movies._c3) DIV 5 asc
 """
 
 res = spark.sql(sqlQuery)
