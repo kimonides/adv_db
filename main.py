@@ -113,6 +113,60 @@ sc = spark.sparkContext
 # for i in q4:
 #         print(i)
 
+# ---------------------------------------------                 Query 5               ------------------------------------------------
+# (movieID,(userID,rating))
+ratings =   sc.textFile('hdfs://master:9000/data/ratings.csv'). \
+            map(split_complex). \
+            map(lambda row: (row[1], (row[0],row[2])))
+
+# outputs (movieID ,genre)    
+movieGenres =   sc.textFile('hdfs://master:9000/data/movie_genres.csv'). \
+                map(split_complex)
+
+# outputs (movieID , ( (userID,rating),genre ))
+movieGenreRatings = ratings.join(movieGenres)
+
+movies =        sc.textFile('hdfs://master:9000/data/movies.csv'). \
+                map(split_complex). \
+                map(lambda row : (row[0],row[1]))
+
+# outputs (movieID, ( ((userID,rating),genre),movieName ))
+movieGenreRatings = movieGenreRatings.join(movies)
+
+def emitUsers(row):
+    movie = row[1][1]
+    userID = row[1][0][0][0]
+    rating = row[1][0][0][1]
+    genre = row[1][0][1]
+    # ( (userID,genre),( (leastLikedMovie,leastLikedMovieRating),(mostLikedMovie,mostLikedMovieRating),1 ) )
+    return ( (userID,genre),((rating,movie),(rating,movie),1) )
+
+# (leastLikedMovie,leastLikedMovieRating),(mostLikedMovie,mostLikedMovieRating),1 
+def reduceThisShit(x,y):
+    leastLikedMovieRatingX = x[0][0]
+    mostLikedMovieRatingX = x[1][0]
+    countX = x[2]
+    leastLikedMovieRatingY = y[0][0]
+    mostLikedMovieRatingY = y[1][0]
+    countY = y[2]
+
+    mostLiked = x[1] if mostLikedMovieRatingX>=mostLikedMovieRatingY  else y[1]
+    leastLiked = x[0] if leastLikedMovieRatingX<=leastLikedMovieRatingY else y[0]
+
+    return ( leastLiked,mostLiked,countX+countY )
+
+
+q5 =        movieGenreRatings. \
+            map( emitUsers ). \
+            reduceByKey(reduceThisShit). \
+            map( lambda row: ( row[0][1], ( row[0][0],row[1][0],row[1][1],row[1][2] ) ) ). \
+            reduceByKey( lambda x,y: x if x[3]>y[3] else y ). \
+            sortByKey(). \
+            collect()
+
+for i in q5:
+    print(i)
+
 
 # ---------------------------------------------                 SQL WITH CSV              ------------------------------------------------
 
@@ -173,23 +227,23 @@ sc = spark.sparkContext
 
 # ---------------------------------------------                 Query 4 CSV               ------------------------------------------------
 
-genres = spark.read.format("csv").options(header='false', inferSchema='true').load("hdfs://master:9000/data/movie_genres.csv")
-genres.registerTempTable('genres')
+# genres = spark.read.format("csv").options(header='false', inferSchema='true').load("hdfs://master:9000/data/movie_genres.csv")
+# genres.registerTempTable('genres')
 
-movies = spark.read.format("csv").options(header='false', inferSchema='true').load("hdfs://master:9000/data/movies.csv")
-movies.registerTempTable('movies')
+# movies = spark.read.format("csv").options(header='false', inferSchema='true').load("hdfs://master:9000/data/movies.csv")
+# movies.registerTempTable('movies')
 
 
-sqlQuery = """
-    select YEAR(movies._c3) DIV 5 as Quinquennium, avg(LENGTH(movies._c2)) as Length from movies
-    inner join genres on movies._c0=genres._c0
-    where YEAR(movies._c3)>2000 and genres._c1='Drama'
-    group by YEAR(movies._c3) DIV 5
-    order by YEAR(movies._c3) DIV 5 asc
-"""
+# sqlQuery = """
+#     select YEAR(movies._c3) DIV 5 as Quinquennium, avg(LENGTH(movies._c2)) as Length from movies
+#     inner join genres on movies._c0=genres._c0
+#     where YEAR(movies._c3)>2000 and genres._c1='Drama'
+#     group by YEAR(movies._c3) DIV 5
+#     order by YEAR(movies._c3) DIV 5 asc
+# """
 
-res = spark.sql(sqlQuery)
+# res = spark.sql(sqlQuery)
 
-res.show()
+# res.show()
 
 
