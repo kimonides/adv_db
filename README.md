@@ -4,7 +4,7 @@ This is the to do list for ADBMS_PROJECT
     To Implement:
       1. Q5 rdd (kimonides) and sql api (gebamp) 
       2. Q4 alternate rdd api implementation -the one with the word count- check queries.py  line 67-74 (kimonides)
-      3. ~time bar chart plotter (gebamp)~
+      3. ---time bar chart plotter (gebamp)---
     To Check:
       1. Q1-Q4 rdd Api shows correct outputs -same with sql api- (kimonides)
     To Run:
