@@ -115,57 +115,59 @@ sc = spark.sparkContext
 
 # ---------------------------------------------                 Query 5               ------------------------------------------------
 # (movieID,(userID,rating))
-ratings =   sc.textFile('hdfs://master:9000/data/ratings.csv'). \
-            map(split_complex). \
-            map(lambda row: (row[1], (row[0],row[2])))
+# ratings =   sc.textFile('hdfs://master:9000/data/ratings.csv'). \
+#             map(split_complex). \
+#             map(lambda row: (row[1], (row[0],row[2])))
 
-# outputs (movieID ,genre)    
-movieGenres =   sc.textFile('hdfs://master:9000/data/movie_genres.csv'). \
-                map(split_complex)
+# # outputs (movieID ,genre)    
+# movieGenres =   sc.textFile('hdfs://master:9000/data/movie_genres.csv'). \
+#                 map(split_complex)
 
-# outputs (movieID , ( (userID,rating),genre ))
-movieGenreRatings = ratings.join(movieGenres)
+# # outputs (movieID , ( (userID,rating),genre ))
+# movieGenreRatings = ratings.join(movieGenres)
 
-movies =        sc.textFile('hdfs://master:9000/data/movies.csv'). \
-                map(split_complex). \
-                map(lambda row : (row[0],row[1]))
+# # outputs (movieID, (movieName,moviePopularity))
+# movies =        sc.textFile('hdfs://master:9000/data/movies.csv'). \
+#                 map(split_complex). \
+#                 map(lambda row : (row[0],(row[1],row[7])))
 
-# outputs (movieID, ( ((userID,rating),genre),movieName ))
-movieGenreRatings = movieGenreRatings.join(movies)
+# # outputs (movieID, ( ((userID,rating),genre),(movieName,moviePopularity) ))
+# movieGenreRatings = movieGenreRatings.join(movies)
 
-def emitUsers(row):
-    movie = row[1][1]
-    userID = row[1][0][0][0]
-    rating = row[1][0][0][1]
-    genre = row[1][0][1]
-    # ( (userID,genre),( (leastLikedMovie,leastLikedMovieRating),(mostLikedMovie,mostLikedMovieRating),1 ) )
-    return ( (userID,genre),((rating,movie),(rating,movie),1) )
+# def emitUsers(row):
+#     movieName = row[1][1][0]
+#     moviePopularity = row[1][1][1]
+#     userID = row[1][0][0][0]
+#     rating = row[1][0][0][1]
+#     genre = row[1][0][1]
+#     # ( (userID,genre),( (leastLikedMovie,leastLikedMovieRating),(mostLikedMovie,mostLikedMovieRating),1 ) )
+#     return ( (userID,genre),((rating,movieName,moviePopularity),(rating,movieName,moviePopularity),1) )
 
-# (leastLikedMovie,leastLikedMovieRating),(mostLikedMovie,mostLikedMovieRating),1 
-def reduceThisShit(x,y):
-    leastLikedMovieRatingX = x[0][0]
-    mostLikedMovieRatingX = x[1][0]
-    countX = x[2]
-    leastLikedMovieRatingY = y[0][0]
-    mostLikedMovieRatingY = y[1][0]
-    countY = y[2]
+# # (leastLikedMovieRating,leastLikedMovie,leastLikedMoviePopularity),(mostLikedMovieRating,mostLikedMovie,mostLikedMoviePopularity),1 
+# def reduceThisShit(x,y):
+#     leastLikedMovieRatingX = x[0][0]
+#     mostLikedMovieRatingX = x[1][0]
+#     countX = x[2]
+#     leastLikedMovieRatingY = y[0][0]
+#     mostLikedMovieRatingY = y[1][0]
+#     countY = y[2]
+    
+#     mostLiked = x[1] if (mostLikedMovieRatingX>mostLikedMovieRatingY or (mostLikedMovieRatingX==mostLikedMovieRatingY and x[1][2]>y[1][2]))  else y[1]
+#     leastLiked = x[0] if (leastLikedMovieRatingX<leastLikedMovieRatingY or (leastLikedMovieRatingX==leastLikedMovieRatingY and x[0][2]>y[0][2])) else y[0]
 
-    mostLiked = x[1] if mostLikedMovieRatingX>=mostLikedMovieRatingY  else y[1]
-    leastLiked = x[0] if leastLikedMovieRatingX<=leastLikedMovieRatingY else y[0]
-
-    return ( leastLiked,mostLiked,countX+countY )
+#     return ( leastLiked,mostLiked,countX+countY )
 
 
-q5 =        movieGenreRatings. \
-            map( emitUsers ). \
-            reduceByKey(reduceThisShit). \
-            map( lambda row: ( row[0][1], ( row[0][0],row[1][0],row[1][1],row[1][2] ) ) ). \
-            reduceByKey( lambda x,y: x if x[3]>y[3] else y ). \
-            sortByKey(). \
-            collect()
+# q5 =        movieGenreRatings. \
+#             map( emitUsers ). \
+#             reduceByKey(reduceThisShit). \
+#             map( lambda row: ( row[0][1], ( row[0][0],row[1][0],row[1][1],row[1][2] ) ) ). \
+#             reduceByKey( lambda x,y: x if x[3]>y[3] else y ). \
+#             sortByKey(). \
+#             collect()
 
-for i in q5:
-    print(i)
+# for i in q5:
+#     print(i)
 
 
 # ---------------------------------------------                 SQL WITH CSV              ------------------------------------------------
@@ -247,3 +249,54 @@ for i in q5:
 # res.show()
 
 
+# sqlQuery = """
+# select temp.genre as genre, MAX(temp.number) as maxnum
+# from
+# (select ratings._c0 as user_id, genres._c1 as genre, count(*) as number
+# from ratings inner join genres 
+# on ratings._c1 = genres._c0
+# group by ratings._c0, genres._c1) temp 
+# group by temp.genre
+# order by temp.genre asc
+# """
+# res = spark.sql(sqlQuery)
+
+# res.show()
+
+# ---------------------------------------------                 REPARTITION JOIN              ------------------------------------------------
+
+ratings =   sc.textFile('hdfs://master:9000/data/ratings.csv'). \
+            map(split_complex). \
+            map(lambda row: (row[1], (row[0])))
+
+# outputs (movieID ,genre)    
+movieGenres =   sc.textFile('hdfs://master:9000/data/movie_genres_reduced.csv'). \
+                map(split_complex). \
+                map(lambda row:(row[0],row[1]))
+
+def _do_python_join(rdd, other, numPartitions, dispatch):
+    ls = rdd.mapValues(lambda v: ('L', v))
+    bs = other.mapValues(lambda v: ('R', v))
+    return ls.union(bs).groupByKey(numPartitions).flatMapValues(lambda x: dispatch(x.__iter__()))
+
+
+def repartitionJoin(rdd, other, numPartitions=None):
+    def dispatch(seq):
+        LB, RB = [], []
+        for (n, v) in seq:
+            if n == 'L':
+                LB.append(v)
+            elif n == 'R':
+                RB.append(v)
+        return ((l, b) for l in LB for b in RB)
+    return _do_python_join(rdd, other, numPartitions, dispatch)
+
+test = repartitionJoin(ratings,movieGenres)
+test123 = test.take(10)
+
+for i in test123:
+    print(i)
+    
+
+# # outputs (movieID , ( (userID,rating),genre ))
+# movieGenreRatings = ratings.join(movieGenres)
