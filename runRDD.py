@@ -18,7 +18,7 @@ def q1():
             print("b is:" + b)
             a = int(a)
             b = int(b)
-            return (float(a)-float(b))/float(b)
+            return (float(a)-float(b))/float(b) * 100
 
     q1 =    sc.textFile('hdfs://master:9000/data/movies.csv'). \
             map(split_complex). \
@@ -157,11 +157,11 @@ def benchmark():
         sys.stdout = sys.__stdout__
         runTime = endTime -startTime
         times.append(runTime)
-    # Restore stdout
     sys.stdout = open('./results_rdd/times', 'w+') 
-    print('------------------Printing Times-----------------------------')
     for (i,t) in enumerate(times):
         print('Query %s time:%s' % (i,t))
     sys.stdout = sys.__stdout__
+
+
 if __name__ == '__main__': 
     benchmark()
