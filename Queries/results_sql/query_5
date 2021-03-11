@@ -1,26 +1,25 @@
-+------+----+------+
-| genre|u_id|rating|
-+------+----+------+
-|Action|8659|   4.0|
-|Action|8659|   4.0|
-|Action|8659|   4.0|
-|Action|8659|   3.0|
-|Action|8659|   3.0|
-|Action|8659|   3.0|
-|Action|8659|   3.0|
-|Action|8659|   4.0|
-|Action|8659|   4.0|
-|Action|8659|   4.0|
-|Action|8659|   3.0|
-|Action|8659|   3.0|
-|Action|8659|   3.0|
-|Action|8659|   3.0|
-|Action|8659|   3.0|
-|Action|8659|   3.0|
-|Action|8659|   4.0|
-|Action|8659|   4.0|
-|Action|8659|   4.0|
-|Action|8659|   4.0|
-+------+----+------+
-only showing top 20 rows
++---------------+-------+-------+
+|          genre|user_id|reviews|
++---------------+-------+-------+
+|         Action|   8659|    588|
+|      Adventure|   8659|    369|
+|      Animation|  45811|    117|
+|         Comedy|  45811|   1024|
+|          Crime|   8659|    474|
+|    Documentary|  45811|    215|
+|          Drama|  45811|   1815|
+|         Family|  45811|    198|
+|        Fantasy|   8659|    249|
+|        Foreign|  45811|    134|
+|        History|  45811|    155|
+|         Horror|  45811|    350|
+|          Music|  45811|    130|
+|        Mystery|   8659|    239|
+|        Romance|  45811|    584|
+|Science Fiction|   8659|    313|
+|       TV Movie|  45811|     38|
+|       Thriller|   8659|    725|
+|            War|  45811|    120|
+|        Western|  45811|     84|
++---------------+-------+-------+
 
