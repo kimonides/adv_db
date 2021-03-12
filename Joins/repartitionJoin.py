@@ -35,8 +35,9 @@ def repartitionJoin(rdd, other):
     rs = other.mapValues(lambda v: ('R', v))
     return ls.union(rs).groupByKey().flatMapValues(lambda x: dispatch(x.__iter__()))
 
-test = repartitionJoin(ratings,movieGenres)
-test123 = test.collect()
+import time
 
-for i in test123:
-    print(i)
+startTime = time.time()
+join = repartitionJoin(ratings,movieGenres)
+endTime = time.time()
+print(endTime -startTime)
