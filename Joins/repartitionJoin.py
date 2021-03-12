@@ -39,5 +39,6 @@ import time
 
 startTime = time.time()
 join = repartitionJoin(ratings,movieGenres)
+join.collect()
 endTime = time.time()
 print(endTime -startTime)

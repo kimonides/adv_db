@@ -130,14 +130,12 @@ def broadcastHashJoin(L,R,p):
                             for lv in table[rk]:
                                 yield ( rk,(rv,lv) ) 
     #-------------------------- Function Starts Here ------------------------------------
-    import time
     R = sc.broadcast(list(partition(R.collect(), p)))
-    startTime = time.time()
     join =  L.mapPartitions(hashJoin)
-    endTime = time.time()
-    print(endTime -startTime)
     return join
 
+# m = sc.parallelize([(1, 2), (3, 4),(1,3)]).groupByKey().map(lambda row:(row[0],tuple(row[1]))).collectAsMap()
+# print(m)
 movieGenres =   sc.textFile('hdfs://master:9000/data/movie_genres_reduced.csv'). \
                 map(split_complex). \
                 map(lambda row:(row[0],row[1]))
@@ -145,4 +143,9 @@ ratings =   sc.textFile('hdfs://master:9000/data/ratings.csv'). \
             map(split_complex). \
             map(lambda row: (row[1], row[0]))
 
-join = broadcastHashJoin(L=ratings,R=movieGenres,p=5)
+import time
+startTime = time.time()
+join = broadcastHashJoin(L=ratings,R=movieGenres,p=1)
+join.collect()
+endTime = time.time()
+print(endTime -startTime)
