@@ -1,3 +1,18 @@
+# --------------------- Repartition Join ----------
+
+def map(_,v):
+	k = extractJoinKey(v)
+	v.addTag()
+	emit(k,v)
+
+def reduce(k,vs):
+	BR , BL = [] , []
+	for v in vs:
+		BR.append(v) if v.tag == 'R' else BL.append(v)
+	for new_record in ((l, b) for l in BL for b in BR):
+		emit(k,new_record)
+
+
 # --------------------- q1 -------------------------
 def getEarnings(a,b):
 	print("a is:" + a)
