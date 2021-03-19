@@ -1,12 +1,19 @@
 #!/usr/bin/env python3.7
-import pandas as pd
 
-df_1 = pd.read_csv('/home/user/project/movies.csv')
-df_1.to_parquet('/home/user/project/movies.parquet')
+from pyspark.sql import SparkSession
+from pyspark.sql import Row
 
-df_2 = pd.read_csv('/home/user/project/movie_genres.csv')
-df_2.to_parquet('/home/user/project/movie_genres.parquet')
+from io import StringIO
+import csv
 
-df_3 = pd.read_csv('/home/user/project/ratings.csv')
-df_3.to_parquet('/home/user/project/ratings.parquet')
 
+
+#Convert the  csv files to .parquet while maintaining the schema 
+
+spark = SparkSession.builder.appName("ADBMS Project").getOrCreate()
+moviesDF = spark.read.csv("hdfs://master:9000/dbms_project/movies.csv")
+moviesDF.write.parquet("hdfs://master:9000/dbms_project/movies.parquet")
+ratingsDF = spark.read.csv("hdfs://master:9000/dbms_project/ratings.csv")
+ratingsDF.write.parquet("hdfs://master:9000/dbms_project/ratings.parquet")
+genresDF = spark.read.csv("hdfs://master:9000/dbms_project/movie_genres.csv")
+genresDF.write.parquet("hdfs://master:9000/dbms_project/movie_genres.parquet")
